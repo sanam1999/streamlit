@@ -3,11 +3,7 @@ import pandas as pd
 import joblib
 
 # Load model and label encoder
-try:
-    model = joblib.load("model.pkl")
-except Exception as e:
-    st.error(f"Error loading model.pkl: {e}")
-    st.stop()
+model = joblib.load("model.pkl")
 
 try:
     label_encoder = joblib.load("label_encoder.pkl")
