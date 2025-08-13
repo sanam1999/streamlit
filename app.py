@@ -4,7 +4,7 @@ import joblib
 
 # Load model and label encoder
 try:
-    model = joblib.load("career_model.pkl")
+    model = joblib.load("model.pkl")
 except Exception as e:
     st.error(f"Error loading career_model.pkl: {e}")
     st.stop()
