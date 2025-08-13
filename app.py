@@ -69,9 +69,9 @@ if st.button("Predict"):
         prediction = model.predict(input_df)[0]
         raw = round(prediction)
 
-        if raw >= 1:
+        if raw < 1:
             label = "Entry"
-        elif raw >= 2:
+        elif raw <= 1.3:
             label = "Mid"
         elif raw <= 2:
             label = "Senior"
