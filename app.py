@@ -6,7 +6,7 @@ import joblib
 try:
     model = joblib.load("model.pkl")
 except Exception as e:
-    st.error(f"Error loading career_model.pkl: {e}")
+    st.error(f"Error loading model.pkl: {e}")
     st.stop()
 
 try:
@@ -24,7 +24,13 @@ gender = st.selectbox("Gender", ["Male", "Female", "Other"])
 high_school_gpa = st.slider("High School GPA", 0.0, 4.0, 3.0, 0.1)
 univ_rank = st.number_input("University Ranking (1 = best)", min_value=1, max_value=500, value=50)
 univ_gpa = st.slider("University GPA", 0.0, 4.0, 3.0, 0.1)
-field_of_study = st.text_input("Field of Study (e.g., Computer Science)")
+
+# Dropdown for Field of Study
+field_of_study = st.selectbox(
+    "Field of Study",
+    ['Arts', 'Law', 'Medicine', 'Computer Science', 'Business', 'Mathematics', 'Engineering']
+)
+
 internships = st.number_input("Internships Completed", min_value=0, max_value=10, value=1)
 projects = st.number_input("Projects Completed", min_value=0, max_value=50, value=2)
 certifications = st.number_input("Certifications", min_value=0, max_value=20, value=1)
@@ -32,30 +38,27 @@ soft_skills = st.slider("Soft Skills Score", 0.0, 10.0, 5.0, 0.1)
 starting_salary = st.number_input("Starting Salary", min_value=0.0, value=30000.0)
 
 if st.button("Predict"):
-    if field_of_study.strip() == "":
-        st.error("Field of Study is required")
-    else:
-        try:
-            input_data = pd.DataFrame([{
-                'Age': float(age),
-                'Gender': gender.capitalize(),
-                'High_School_GPA': float(high_school_gpa),
-                'University_Ranking': float(univ_rank),
-                'University_GPA': float(univ_gpa),
-                'Field_of_Study': field_of_study.title(),
-                'Internships_Completed': int(internships),
-                'Projects_Completed': int(projects),
-                'Certifications': int(certifications),
-                'Soft_Skills_Score': float(soft_skills),
-                'Starting_Salary': float(starting_salary)
-            }])
+    try:
+        input_data = pd.DataFrame([{
+            'Age': float(age),
+            'Gender': gender.capitalize(),
+            'High_School_GPA': float(high_school_gpa),
+            'University_Ranking': float(univ_rank),
+            'University_GPA': float(univ_gpa),
+            'Field_of_Study': field_of_study,
+            'Internships_Completed': int(internships),
+            'Projects_Completed': int(projects),
+            'Certifications': int(certifications),
+            'Soft_Skills_Score': float(soft_skills),
+            'Starting_Salary': float(starting_salary)
+        }])
 
-            prediction = model.predict(input_data)
-            predicted_label = label_encoder.inverse_transform(prediction)[0]
-            confidence = round(float(model.predict_proba(input_data).max()) * 100, 1)
+        prediction = model.predict(input_data)
+        predicted_label = label_encoder.inverse_transform(prediction)[0]
+        confidence = round(float(model.predict_proba(input_data).max()) * 100, 1)
 
-            st.success(f"**Prediction:** {predicted_label}")
-            st.info(f"**Confidence:** {confidence}%")
+        st.success(f"**Prediction:** {predicted_label}")
+        st.info(f"**Confidence:** {confidence}%")
 
-        except Exception as e:
-            st.error(f"Prediction failed: {e}")
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
