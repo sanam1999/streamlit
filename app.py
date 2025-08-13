@@ -1,15 +1,24 @@
 import streamlit as st
 import pandas as pd
-import joblib
+import pickle
 
-# Load model and label encoder
-model = joblib.load("model.pkl")
+
 
 try:
-    label_encoder = joblib.load("label_encoder.pkl")
+    with open('model.pkl', 'rb') as f:
+        model = pickle.load(f)
 except Exception as e:
-    st.error(f"Error loading label_encoder.pkl: {e}")
+    st.error(f"Error loading model.pkl: {e}")
     st.stop()
+
+
+try:
+    with open('label_encoder.pkl', 'rb') as f:
+        label_encoders = pickle.load(f)
+except Exception as e:
+    st.error(f"Error loading label_encoders.pkl: {e}")
+    st.stop()
+
 
 st.title("Career Prediction App")
 st.markdown("Fill in the details below to predict your **Career Path**:")
