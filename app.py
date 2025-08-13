@@ -1,85 +1,61 @@
 import streamlit as st
 import pandas as pd
-import pickle
+import joblib
 
-
+# Load model and label encoder
 try:
-    with open('model.pkl', 'rb') as f:
-        model = pickle.load(f)
+    model = joblib.load("career_model.pkl")
 except Exception as e:
-    st.error(f"Error loading model.pkl: {e}")
+    st.error(f"Error loading career_model.pkl: {e}")
     st.stop()
 
-
 try:
-    with open('label_encoders.pkl', 'rb') as f:
-        label_encoders = pickle.load(f)
+    label_encoder = joblib.load("label_encoder.pkl")
 except Exception as e:
-    st.error(f"Error loading label_encoders.pkl: {e}")
+    st.error(f"Error loading label_encoder.pkl: {e}")
     st.stop()
 
+st.title("Career Prediction App")
+st.markdown("Fill in the details below to predict your **Career Path**:")
 
-try:
-    with open('feature_order.pkl', 'rb') as f:
-        feature_order = pickle.load(f)
-except Exception as e:
-    st.error(f"Error loading feature_order.pkl: {e}")
-    st.stop()
-
-
-try:
-    data = pd.read_csv('./data/dataset.csv.csv')
-except FileNotFoundError:
-    st.error("CSV file not found. Please ensure 'dataset.csv.csv' is in the 'data/' folder.")
-    st.stop()
-
-
-st.title("Job Level Prediction App")
-st.markdown("Enter your profile details to predict your **Job Level**:")
-
-
-univ_rank = st.selectbox("University Ranking (1=best)", sorted(data['University_Ranking'].unique()))
+# Input fields
+age = st.number_input("Age", min_value=0, max_value=100, value=25)
+gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+high_school_gpa = st.slider("High School GPA", 0.0, 4.0, 3.0, 0.1)
+univ_rank = st.number_input("University Ranking (1 = best)", min_value=1, max_value=500, value=50)
 univ_gpa = st.slider("University GPA", 0.0, 4.0, 3.0, 0.1)
-field = st.selectbox("Field of Study", label_encoders['Field_of_Study'].classes_)
-internships = st.slider("Internships Completed", 0, 10, 1)
-projects = st.slider("Projects Completed", 0, 20, 2)
-certs = st.slider("Certifications", 0, 10, 1)
-
-
-field_encoded = label_encoders['Field_of_Study'].transform([field])[0]
-
-
-input_data = {
-    'University_Ranking': [univ_rank],
-    'University_GPA': [univ_gpa],
-    'Field_of_Study': [field_encoded],
-    'Projects_Completed': [projects],
-    'Internships_Completed': [internships],
-    'Certifications': [certs],
-}
-
-input_df = pd.DataFrame(input_data)
-
-
-input_df = input_df[feature_order]
-
+field_of_study = st.text_input("Field of Study (e.g., Computer Science)")
+internships = st.number_input("Internships Completed", min_value=0, max_value=10, value=1)
+projects = st.number_input("Projects Completed", min_value=0, max_value=50, value=2)
+certifications = st.number_input("Certifications", min_value=0, max_value=20, value=1)
+soft_skills = st.slider("Soft Skills Score", 0.0, 10.0, 5.0, 0.1)
+starting_salary = st.number_input("Starting Salary", min_value=0.0, value=30000.0)
 
 if st.button("Predict"):
-    try:
-        prediction = model.predict(input_df)[0]
-        raw = round(prediction)
+    if field_of_study.strip() == "":
+        st.error("Field of Study is required")
+    else:
+        try:
+            input_data = pd.DataFrame([{
+                'Age': float(age),
+                'Gender': gender.capitalize(),
+                'High_School_GPA': float(high_school_gpa),
+                'University_Ranking': float(univ_rank),
+                'University_GPA': float(univ_gpa),
+                'Field_of_Study': field_of_study.title(),
+                'Internships_Completed': int(internships),
+                'Projects_Completed': int(projects),
+                'Certifications': int(certifications),
+                'Soft_Skills_Score': float(soft_skills),
+                'Starting_Salary': float(starting_salary)
+            }])
 
-        if raw == 0:
-            label = "Entry"
-        elif raw == 1:
-            label = "Mid"
-        elif raw == 2:
-            label = "Senior"
-        else:
-            label = f"Unknown ({raw})"
+            prediction = model.predict(input_data)
+            predicted_label = label_encoder.inverse_transform(prediction)[0]
+            confidence = round(float(model.predict_proba(input_data).max()) * 100, 1)
 
-        st.write(f"Raw model output: `{prediction:.2f}`")
-        st.success(f"Predicted Job Level: **{label}**")
+            st.success(f"**Prediction:** {predicted_label}")
+            st.info(f"**Confidence:** {confidence}%")
 
-    except Exception as e:
-        st.error(f"Prediction failed: {e}")
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")
